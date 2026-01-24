@@ -1,0 +1,113 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           String    @default("TEACHER") // Roles: SUPERADMIN, ADMIN, TEACHER, STUDENT, PARENT, STAFF
+  isActive       Boolean   @default(true)
+  phone          String?
+  receivedAmount Float     @default(0.0)
+  createdAt      DateTime  @default(now())
+  accounts       Account[]
+  sessions       Session[]
+  subjects       Subject[] @relation("TeacherSubjects")
+  managedClasses SchoolClass[] @relation("ClassTeacher")
+  currentClass   SchoolClass? @relation("ClassStudents", fields: [classId], references: [id])
+  classId        String?
+  createdById    String?
+  qrCode         String?   // QR Code data URL
+
+  // Student specific fields
+  fatherName     String?
+  grandfatherName String?
+  studentId      String?   @unique // نمبر اساس
+  surname        String?
+  tazkiraNo      String?
+  nameEn         String?
+  fatherNameEn   String?
+  grandfatherNameEn String?
+  surnameEn      String?
+  permanentAddress String?
+  currentAddress String?
+  paternalUncle  String?
+  maternalUncle  String?
+  paternalCousin String?
+  maternalCousin String?
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SchoolClass {
+  id          String    @id @default(cuid())
+  name        String
+  level       String    // e.g., Grade 1
+  section     String    // e.g., A, B, Alef
+  gender      String    // e.g., BOYS, GIRLS, MIXED
+  teacher     User?     @relation("ClassTeacher", fields: [teacherId], references: [id])
+  teacherId   String?
+  subjects    Subject[] @relation("ClassSubjects")
+  students    User[]    @relation("ClassStudents")
+  createdAt   DateTime  @default(now())
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  subjects  Subject[]
+  createdAt DateTime  @default(now())
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  name        String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String
+  teacher     User?     @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  teacherId   String?
+  classes     SchoolClass[] @relation("ClassSubjects")
+  createdAt   DateTime  @default(now())
+}
