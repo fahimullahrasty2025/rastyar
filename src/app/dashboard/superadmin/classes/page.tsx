@@ -259,7 +259,6 @@ export default function ManageClassesPage() {
                                             }`}
                                     >
                                         <span>{sub.name}</span>
-                                        <span className="text-[9px] opacity-60 uppercase">{sub.category.name}</span>
                                     </button>
                                 ))}
                             </div>

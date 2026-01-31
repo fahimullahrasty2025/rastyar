@@ -28,18 +28,27 @@ export default function NewClassPage() {
     const { t, dir } = useLanguage();
 
     // State for options
-    const [categories, setCategories] = useState([]);
+    const LEVELS = [
+        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
+        "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"
+    ];
+    // const [categories, setCategories] = useState([]); // REMOVED
     const [teachers, setTeachers] = useState([]);
+    const [subjects, setSubjects] = useState([]); // ADDED
+
     const [availableStudents, setAvailableStudents] = useState([]);
 
     // Form state
     const [formData, setFormData] = useState({
-        categoryId: "",
+        level: "",
+
         section: "",
         gender: "MIXED",
         teacherId: "",
+        subjectIds: [] as string[],
         studentIds: [] as string[]
     });
+
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -61,15 +70,19 @@ export default function NewClassPage() {
 
     const fetchInitialData = async () => {
         try {
-            const [catRes, teacherRes, studentRes] = await Promise.all([
-                fetch("/api/categories"),
+            const [teacherRes, studentRes, subjectRes] = await Promise.all([
+                // fetch("/api/categories"), // REMOVED
                 fetch("/api/admin/teachers"),
-                fetch("/api/admin/available-students")
+
+                fetch("/api/admin/available-students"),
+                fetch("/api/subjects")
             ]);
 
-            if (catRes.ok) setCategories(await catRes.json());
+            // if (catRes.ok) setCategories(await catRes.json()); // REMOVED
             if (teacherRes.ok) setTeachers(await teacherRes.json());
+
             if (studentRes.ok) setAvailableStudents(await studentRes.json());
+            if (subjectRes.ok) setSubjects(await subjectRes.json());
 
         } catch (err) {
             console.error("Failed to load options");
@@ -89,7 +102,7 @@ export default function NewClassPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.categoryId || !formData.section) {
+        if (!formData.level || !formData.section) {
             setError("Please fill in all mandatory fields");
             return;
         }
@@ -162,13 +175,13 @@ export default function NewClassPage() {
                                     <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.new_class.level_label}</label>
                                     <select
                                         className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
-                                        value={formData.categoryId}
-                                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                                        value={formData.level}
+                                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                                         required
                                     >
                                         <option value="">{t.dashboards.new_class.select_level}</option>
-                                        {categories.map((cat: any) => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        {LEVELS.map((lvl) => (
+                                            <option key={lvl} value={lvl}>{lvl}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -217,13 +230,30 @@ export default function NewClassPage() {
                             </div>
                         </div>
 
-                        <div className="p-8 rounded-[2rem] bg-primary/5 border border-primary/10 flex gap-4 text-start">
-                            <div className="text-primary mt-1"><Info size={20} /></div>
-                            <div className="space-y-1">
-                                <h4 className="font-black text-sm uppercase tracking-wide">{t.dashboards.new_class.auto_subjects}</h4>
-                                <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                                    {t.dashboards.new_class.auto_subjects_desc}
-                                </p>
+                        <div className="p-8 rounded-[2rem] bg-card/60 border border-border flex flex-col gap-4 text-start">
+                            <div className="flex items-center gap-2 text-primary">
+                                <BookOpen size={20} />
+                                <h4 className="font-black text-sm uppercase tracking-wide">{t.dashboards.subjects}</h4>
+                            </div>
+                            <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto custom-scrollbar">
+                                {subjects.map((sub: any) => (
+                                    <button
+                                        key={sub.id}
+                                        type="button"
+                                        onClick={() => {
+                                            const newIds = formData.subjectIds.includes(sub.id)
+                                                ? formData.subjectIds.filter(id => id !== sub.id)
+                                                : [...formData.subjectIds, sub.id];
+                                            setFormData({ ...formData, subjectIds: newIds });
+                                        }}
+                                        className={`px-3 py-2 rounded-lg text-xs font-black transition-all border ${formData.subjectIds.includes(sub.id)
+                                            ? 'bg-primary text-white border-primary'
+                                            : 'bg-slate-50 dark:bg-white/5 border-border hover:border-primary'
+                                            }`}
+                                    >
+                                        {sub.name}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>

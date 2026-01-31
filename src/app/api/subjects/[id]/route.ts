@@ -13,11 +13,11 @@ export async function PUT(
     }
 
     try {
-        const { name, categoryId } = await req.json();
+        const { name } = await req.json();
         const { id } = await params;
         const subject = await prisma.subject.update({
             where: { id },
-            data: { name, categoryId }
+            data: { name }
         });
         return NextResponse.json(subject);
     } catch (error) {
@@ -44,3 +44,4 @@ export async function DELETE(
         return NextResponse.json({ message: "Error deleting subject" }, { status: 500 });
     }
 }
+.

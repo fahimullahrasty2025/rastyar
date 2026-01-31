@@ -94,18 +94,9 @@ model SchoolClass {
   createdAt   DateTime  @default(now())
 }
 
-model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  subjects  Subject[]
-  createdAt DateTime  @default(now())
-}
-
 model Subject {
   id          String    @id @default(cuid())
   name        String
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId  String
   teacher     User?     @relation("TeacherSubjects", fields: [teacherId], references: [id])
   teacherId   String?
   classes     SchoolClass[] @relation("ClassSubjects")

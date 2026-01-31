@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET() {
     const subjects = await prisma.subject.findMany({
-        include: { category: true, teacher: true },
+        include: { teacher: true },
         orderBy: { name: 'asc' }
     });
     return NextResponse.json(subjects);
@@ -18,12 +18,19 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { name, categoryId } = await req.json();
+        const body = await req.json();
+        const { name } = body;
+
+        if (!name || name.trim() === "") {
+            return NextResponse.json({ message: "Subject name is required" }, { status: 400 });
+        }
+
         const subject = await prisma.subject.create({
-            data: { name, categoryId }
+            data: { name }
         });
         return NextResponse.json(subject);
     } catch (error) {
+        console.error("Error creating subject:", error);
         return NextResponse.json({ message: "Error creating subject" }, { status: 500 });
     }
 }

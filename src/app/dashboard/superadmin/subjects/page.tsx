@@ -22,30 +22,19 @@ export default function ManageSubjectsPage() {
     const router = useRouter();
     const { t } = useLanguage();
 
-    const [categories, setCategories] = useState<any[]>([]);
     const [subjects, setSubjects] = useState<any[]>([]);
 
-    const [newCatName, setNewCatName] = useState("");
     const [newSubName, setNewSubName] = useState("");
-    const [selectedCatId, setSelectedCatId] = useState("");
-
-    const [editingCatId, setEditingCatId] = useState<string | null>(null);
-    const [editCatName, setEditCatName] = useState("");
 
     const [editingSubId, setEditingSubId] = useState<string | null>(null);
     const [editSubName, setEditSubName] = useState("");
-    const [editSubCatId, setEditSubCatId] = useState("");
 
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [catRes, subRes] = await Promise.all([
-                fetch("/api/categories"),
-                fetch("/api/subjects")
-            ]);
-            if (catRes.ok) setCategories(await catRes.json());
+            const subRes = await fetch("/api/subjects");
             if (subRes.ok) setSubjects(await subRes.json());
         } catch (err) {
             console.error("Fetch error");
@@ -64,67 +53,65 @@ export default function ManageSubjectsPage() {
         }
     }, [status, session, router, fetchData]);
 
-    const addCategory = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newCatName) return;
-        const res = await fetch("/api/categories", {
-            method: "POST",
-            body: JSON.stringify({ name: newCatName }),
-            headers: { "Content-Type": "application/json" }
-        });
-        if (res.ok) {
-            setNewCatName("");
-            fetchData();
-        }
-    };
-
-    const deleteCategory = async (id: string) => {
-        if (!confirm(t.dashboards.delete + "?")) return;
-        const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
-        if (res.ok) fetchData();
-    };
-
-    const updateCategory = async (id: string) => {
-        const res = await fetch(`/api/categories/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({ name: editCatName }),
-            headers: { "Content-Type": "application/json" }
-        });
-        if (res.ok) {
-            setEditingCatId(null);
-            fetchData();
-        }
-    };
-
     const addSubject = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newSubName || !selectedCatId) return;
-        const res = await fetch("/api/subjects", {
-            method: "POST",
-            body: JSON.stringify({ name: newSubName, categoryId: selectedCatId }),
-            headers: { "Content-Type": "application/json" }
-        });
-        if (res.ok) {
-            setNewSubName("");
-            fetchData();
+        if (!newSubName) return;
+        setLoading(true);
+        try {
+            const res = await fetch("/api/subjects", {
+                method: "POST",
+                body: JSON.stringify({ name: newSubName }),
+                headers: { "Content-Type": "application/json" }
+            });
+            if (res.ok) {
+                setNewSubName("");
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.message || "Failed to create subject");
+                setLoading(false); // Only set loading false here if not refetching immediately (fetchData handles loading)
+            }
+        } catch (err) {
+            alert("Something went wrong");
+            setLoading(false);
         }
     };
 
     const deleteSubject = async (id: string) => {
         if (!confirm(t.dashboards.delete + "?")) return;
-        const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
-        if (res.ok) fetchData();
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/subjects/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                fetchData();
+            } else {
+                alert("Failed to delete");
+                setLoading(false);
+            }
+        } catch (err) {
+            alert("Error deleting");
+            setLoading(false);
+        }
     };
 
     const updateSubject = async (id: string) => {
-        const res = await fetch(`/api/subjects/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({ name: editSubName, categoryId: editSubCatId }),
-            headers: { "Content-Type": "application/json" }
-        });
-        if (res.ok) {
-            setEditingSubId(null);
-            fetchData();
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/subjects/${id}`, {
+                method: "PUT",
+                body: JSON.stringify({ name: editSubName }),
+                headers: { "Content-Type": "application/json" }
+            });
+            if (res.ok) {
+                setEditingSubId(null);
+                fetchData();
+            } else {
+                alert("Failed to update");
+                setLoading(false);
+            }
+        } catch (err) {
+            alert("Error updating");
+            setLoading(false);
         }
     };
 
@@ -165,52 +152,19 @@ export default function ManageSubjectsPage() {
                             {t.dashboards.subjects}
                         </h3>
 
-                        <form onSubmit={async (e) => {
-                            e.preventDefault();
-                            if (!newSubName) return;
-
-                            // Find or create default category
-                            let catId = categories.length > 0 ? categories[0].id : null;
-                            if (!catId) {
-                                // Create default category
-                                const res = await fetch("/api/categories", {
-                                    method: "POST",
-                                    body: JSON.stringify({ name: "General" }),
-                                    headers: { "Content-Type": "application/json" }
-                                });
-                                if (res.ok) {
-                                    const newCat = await res.json();
-                                    catId = newCat.id;
-                                    // Refresh categories
-                                    const catRes = await fetch("/api/categories");
-                                    if (catRes.ok) setCategories(await catRes.json());
-                                }
-                            }
-
-                            if (catId) {
-                                const res = await fetch("/api/subjects", {
-                                    method: "POST",
-                                    body: JSON.stringify({ name: newSubName, categoryId: catId }),
-                                    headers: { "Content-Type": "application/json" }
-                                });
-                                if (res.ok) {
-                                    setNewSubName("");
-                                    fetchData();
-                                }
-                            }
-                        }} className="flex flex-col gap-2 mb-6">
+                        <form onSubmit={addSubject} className="flex flex-col gap-2 mb-6">
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <input
                                     type="text"
                                     placeholder={t.dashboards.subject_name}
                                     value={newSubName}
                                     onChange={(e) => setNewSubName(e.target.value)}
-                                    className="flex-[2] rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                                    className="flex-[2] rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold"
+                                    required
                                 />
-                                {/* Category Select Hidden */}
                             </div>
-                            <button type="submit" className="rounded-xl bg-emerald-500 py-2 text-white text-sm font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-md">
-                                <Plus size={16} />
+                            <button type="submit" className="rounded-xl bg-emerald-500 py-3 text-white text-base font-black hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                                <Plus size={18} />
                                 {t.dashboards.add_subject}
                             </button>
                         </form>
@@ -248,7 +202,7 @@ export default function ManageSubjectsPage() {
                                         ) : (
                                             <>
                                                 <button
-                                                    onClick={() => { setEditingSubId(sub.id); setEditSubName(sub.name); setEditSubCatId(sub.categoryId); }}
+                                                    onClick={() => { setEditingSubId(sub.id); setEditSubName(sub.name); }}
                                                     className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-emerald-500/20"
                                                 >
                                                     <Edit size={14} />

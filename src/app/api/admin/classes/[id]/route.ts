@@ -45,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const { id } = await params;
         const data = await req.json();
-        const { section, gender, teacherId, studentIds } = data;
+        const { section, gender, teacherId, studentIds, subjectIds } = data;
 
         const updatedClass = await prisma.schoolClass.update({
             where: { id },
@@ -54,9 +54,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 gender: gender,
                 teacherId: teacherId || null,
                 // Update name based on section change
-                name: `${data.level} - ${section}`,
+                name: `${data.level || 'Class'} - ${section}`, // Fallback if level missing in body? check logic
                 students: {
                     set: (studentIds || []).map((sId: string) => ({ id: sId }))
+                },
+                subjects: { // Update subjects
+                    set: (subjectIds || []).map((sId: string) => ({ id: sId }))
                 }
             }
         });
