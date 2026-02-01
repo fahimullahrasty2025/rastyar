@@ -11,11 +11,15 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
+        const isAdmin = (session.user as any).role === "ADMIN";
+        const userId = (session.user as any).id;
+
         // Find students who are NOT in any class
         const students = await prisma.user.findMany({
             where: {
                 role: "STUDENT",
-                classId: null // No class assigned
+                classId: null, // No class assigned
+                ...(isAdmin ? { createdById: userId } : {})
             },
             select: {
                 id: true,

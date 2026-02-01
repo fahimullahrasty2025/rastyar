@@ -185,7 +185,10 @@ export default function ManageSubjectsPage() {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col overflow-hidden">
-                                                <span className="font-bold text-foreground text-sm leading-tight truncate">{sub.name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded text-slate-400">#{(subjects.indexOf(sub) + 1).toString().padStart(2, '0')}</span>
+                                                    <span className="font-bold text-foreground text-sm leading-tight truncate">{sub.name}</span>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

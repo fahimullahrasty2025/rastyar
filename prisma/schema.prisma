@@ -44,6 +44,19 @@ model User {
   maternalUncle  String?
   paternalCousin String?
   maternalCousin String?
+
+  // Staff/Teacher specific fields
+  jobTitle       String?
+  experience     String?
+  joinedDate     DateTime?
+
+  grades         Grade[]   @relation("StudentGrades")
+  enrollments    Enrollment[] @relation("StudentEnrollments")
+  attendance     Attendance[] @relation("StudentAttendance")
+
+  // Parent-Student Relationships
+  children       User[]    @relation("ParentChildren")
+  parents        User[]    @relation("ParentChildren")
 }
 
 model Account {
@@ -91,7 +104,24 @@ model SchoolClass {
   teacherId   String?
   subjects    Subject[] @relation("ClassSubjects")
   students    User[]    @relation("ClassStudents")
+  enrollments Enrollment[] @relation("ClassEnrollments")
+  academicYear String?   // e.g., 1403
   createdAt   DateTime  @default(now())
+  grades      Grade[]   @relation("ClassGrades")
+  attendance  Attendance[] @relation("ClassAttendance")
+  createdById String?
+}
+
+model Enrollment {
+  id           String      @id @default(cuid())
+  student      User        @relation("StudentEnrollments", fields: [studentId], references: [id])
+  studentId    String
+  class        SchoolClass @relation("ClassEnrollments", fields: [classId], references: [id])
+  classId      String
+  academicYear String      // e.g. "1403"
+  createdAt    DateTime    @default(now())
+
+  @@unique([studentId, academicYear])
 }
 
 model Subject {
@@ -101,4 +131,61 @@ model Subject {
   teacherId   String?
   classes     SchoolClass[] @relation("ClassSubjects")
   createdAt   DateTime  @default(now())
+  grades      Grade[]   @relation("SubjectGrades")
+  createdById String?
+}
+
+model Grade {
+  id        String      @id @default(cuid())
+  student   User        @relation("StudentGrades", fields: [studentId], references: [id])
+  studentId String
+  subject   Subject     @relation("SubjectGrades", fields: [subjectId], references: [id])
+  subjectId String
+  class     SchoolClass @relation("ClassGrades", fields: [classId], references: [id])
+  classId   String
+  type      String      // MIDTERM, FINAL
+  score     Float
+  academicYear String?   // e.g., 1403
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt // @updatedAt is not valid in SQLite? No, it is.
+
+  @@unique([studentId, subjectId, classId, type])
+}
+
+model Attendance {
+  id           String      @id @default(cuid())
+  student      User        @relation("StudentAttendance", fields: [studentId], references: [id])
+  studentId    String
+  class        SchoolClass @relation("ClassAttendance", fields: [classId], references: [id])
+  classId      String
+  type         String      // MIDTERM, FINAL
+  days         Int         @default(0)
+  present      Int         @default(0)
+  absent       Int         @default(0)
+  sick         Int         @default(0)
+  leave        Int         @default(0)
+  remarks      String?
+  academicYear String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([studentId, classId, type])
+}
+
+model SchoolSettings {
+  id                String   @id @default(cuid())
+  schoolName        String   @default("لیسه عالی خصوصی نیکان")
+  schoolNameEn      String?
+  headerTitle1      String?  @default("وزارت معارف")
+  headerTitle2      String?  @default("ریاست معارف ولایت کابل")
+  headerTitle3      String?  @default("آمریت معارف حوزه دوازدهم تعلیمی")
+  logoLeft          String?  // URL/DataURL
+  logoRight         String?  // URL/DataURL
+  signatureLabel1   String?  @default("مهر و امضاء مدیر لیسه")
+  signatureLabel2   String?  @default("امضاء نگران صنف")
+  signatureLabel3   String?  @default("امضاء سرمعلم")
+  signatureLabel4   String?  @default("هیئت ممتحن")
+  signatureLabel5   String?  @default("هیئت ممتحن (۲)")
+  signatureLabel6   String?  @default("آمریت حوزه تعلیمی")
+  updatedAt         DateTime @updatedAt
 }

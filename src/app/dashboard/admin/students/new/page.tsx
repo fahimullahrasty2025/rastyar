@@ -55,7 +55,7 @@ export default function NewStudentPage() {
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/auth/signin");
-        } else if (session && (session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN") {
+        } else if (session && (session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN" && (session.user as any).role !== "TEACHER") {
             router.push("/");
         }
     }, [status, session, router]);
@@ -106,7 +106,7 @@ export default function NewStudentPage() {
 
             if (res.ok) {
                 setSuccess(true);
-                setTimeout(() => router.push("/dashboard/admin"), 2000);
+                setTimeout(() => router.push(`/dashboard/${(session?.user as any).role.toLowerCase()}`), 2000);
             } else {
                 const data = await res.json();
                 setError(data.message || "Failed to register student");
@@ -129,7 +129,7 @@ export default function NewStudentPage() {
             <div className="container mx-auto px-4 md:px-8 py-8 relative z-10">
                 <header className="mb-8 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/dashboard/admin" className="p-3 bg-card border border-border rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm group">
+                        <Link href={`/dashboard/${(session?.user as any)?.role?.toLowerCase() || 'admin'}`} className="p-3 bg-card border border-border rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm group">
                             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                         </Link>
                         <div>

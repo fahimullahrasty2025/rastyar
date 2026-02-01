@@ -15,7 +15,8 @@ import {
     Filter,
     BookOpen,
     LayoutGrid,
-    List
+    List,
+    ClipboardList
 } from "lucide-react";
 import Link from "next/link";
 
@@ -205,13 +206,22 @@ export default function AdminClassesPage() {
                                         </div>
                                     </div>
 
-                                    <Link
-                                        href={`/dashboard/admin/classes/${item.id}`}
-                                        className="w-full flex items-center justify-center gap-2 py-4 bg-slate-500/5 group-hover:bg-primary group-hover:text-white border border-border group-hover:border-primary rounded-2xl text-xs font-black transition-all"
-                                    >
-                                        {t.dashboards.view_profile}
-                                        <ArrowUpRight size={14} className={dir === 'rtl' ? 'rotate-[-90deg]' : ''} />
-                                    </Link>
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={`/dashboard/admin/classes/${item.id}`}
+                                            className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-500/5 group-hover:bg-primary group-hover:text-white border border-border group-hover:border-primary rounded-2xl text-xs font-black transition-all"
+                                        >
+                                            {t.dashboards.view_profile}
+                                            <ArrowUpRight size={14} className={dir === 'rtl' ? 'rotate-[-90deg]' : ''} />
+                                        </Link>
+                                        <Link
+                                            href={`/dashboard/admin/classes/${item.id}/grading`}
+                                            className="px-4 py-4 bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white border border-orange-500/20 rounded-2xl transition-all flex items-center justify-center"
+                                            title="Grading"
+                                        >
+                                            <ClipboardList size={20} />
+                                        </Link>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -251,8 +261,11 @@ export default function AdminClassesPage() {
                                                     <span className="text-sm font-black text-foreground">{item._count.students}</span>
                                                 </td>
                                                 <td className={`px-6 py-4 ${dir === 'rtl' ? 'text-left' : 'text-right'}`}>
-                                                    <Link href={`/dashboard/admin/classes/${item.id}`} className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl hover:bg-primary hover:text-white transition-all inline-block">
+                                                    <Link href={`/dashboard/admin/classes/${item.id}`} className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl hover:bg-primary hover:text-white transition-all inline-block mx-1">
                                                         <ArrowUpRight size={16} className={dir === 'rtl' ? 'rotate-[-90deg]' : ''} />
+                                                    </Link>
+                                                    <Link href={`/dashboard/admin/classes/${item.id}/grading`} className="p-2 bg-orange-500/10 text-orange-600 rounded-xl hover:bg-orange-500 hover:text-white transition-all inline-block mx-1">
+                                                        <ClipboardList size={16} />
                                                     </Link>
                                                 </td>
                                             </tr>

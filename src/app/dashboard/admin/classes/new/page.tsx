@@ -14,11 +14,9 @@ import {
     CheckCircle,
     XCircle,
     Check,
-    Briefcase,
-    Shield,
-    Info,
     UserCheck,
-    BookOpen
+    BookOpen,
+    Shield
 } from "lucide-react";
 import Link from "next/link";
 
@@ -27,34 +25,59 @@ export default function NewClassPage() {
     const router = useRouter();
     const { t, dir } = useLanguage();
 
-    // State for options
-    const LEVELS = [
-        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-        "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"
-    ];
-    // const [categories, setCategories] = useState([]); // REMOVED
-    const [teachers, setTeachers] = useState([]);
-    const [subjects, setSubjects] = useState([]); // ADDED
-
-    const [availableStudents, setAvailableStudents] = useState([]);
+    // Options
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<any[]>([]);
+    const [availableStudents, setAvailableStudents] = useState<any[]>([]);
 
     // Form state
     const [formData, setFormData] = useState({
+        templateId: "",
+        name: "",
         level: "",
-
         section: "",
-        gender: "MIXED",
+        gender: "",
+        academicYear: "1403", // Default year
         teacherId: "",
         subjectIds: [] as string[],
         studentIds: [] as string[]
     });
-
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState("");
     const [studentSearchTerm, setStudentSearchTerm] = useState("");
+
+    const fetchInitialData = async () => {
+        try {
+            const [teacherRes, studentRes, classRes] = await Promise.all([
+                fetch("/api/admin/teachers"),
+                fetch("/api/admin/available-students"),
+                fetch("/api/classes")
+            ]);
+
+            if (teacherRes.ok) setTeachers(await teacherRes.json());
+            if (studentRes.ok) setAvailableStudents(await studentRes.json());
+            if (classRes.ok) {
+                const allClasses = await classRes.json();
+                // Filter templates (classes created by SuperAdmin)
+                // We'll rely on the creator property if available, 
+                // but since the API might not include it yet, 
+                // we'll assume any class that ISN'T created by the current user 
+                // and has no teacher might be a template. 
+                // Better yet, let's just show all available classes as potential templates 
+                // but exclude the ones already "active" if possible.
+                // For now, any class from SuperAdmin.
+                setTemplates(allClasses);
+            }
+
+        } catch (err) {
+            console.error("Failed to load options");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -68,26 +91,28 @@ export default function NewClassPage() {
         }
     }, [status, session, router]);
 
-    const fetchInitialData = async () => {
-        try {
-            const [teacherRes, studentRes, subjectRes] = await Promise.all([
-                // fetch("/api/categories"), // REMOVED
-                fetch("/api/admin/teachers"),
-
-                fetch("/api/admin/available-students"),
-                fetch("/api/subjects")
-            ]);
-
-            // if (catRes.ok) setCategories(await catRes.json()); // REMOVED
-            if (teacherRes.ok) setTeachers(await teacherRes.json());
-
-            if (studentRes.ok) setAvailableStudents(await studentRes.json());
-            if (subjectRes.ok) setSubjects(await subjectRes.json());
-
-        } catch (err) {
-            console.error("Failed to load options");
-        } finally {
-            setLoading(false);
+    const handleTemplateChange = (templateId: string) => {
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            setFormData(prev => ({
+                ...prev,
+                templateId,
+                name: template.name,
+                level: template.level,
+                section: template.section,
+                gender: template.gender,
+                subjectIds: template.subjects.map((s: any) => s.id)
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                templateId: "",
+                name: "",
+                level: "",
+                section: "",
+                gender: "",
+                subjectIds: []
+            }));
         }
     };
 
@@ -102,14 +127,13 @@ export default function NewClassPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.level || !formData.section) {
-            setError("Please fill in all mandatory fields");
+        if (!formData.templateId) {
+            setError("Please select a class template");
             return;
         }
 
         setSubmitting(true);
         setError("");
-        setSuccess(false);
 
         try {
             const res = await fetch("/api/admin/classes", {
@@ -134,7 +158,7 @@ export default function NewClassPage() {
 
     const filteredStudents = availableStudents.filter((s: any) =>
         s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
-        s.studentId.toLowerCase().includes(studentSearchTerm.toLowerCase())
+        s.studentId?.toLowerCase().includes(studentSearchTerm.toLowerCase())
     );
 
     if (loading) {
@@ -161,57 +185,61 @@ export default function NewClassPage() {
                 </header>
 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                    {/* Left Column: Basic Settings */}
+                    {/* Left Column: Template Selection & Teacher */}
                     <div className="lg:col-span-1 space-y-6">
                         <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-xl border border-border shadow-xl space-y-8">
                             <h3 className="flex items-center gap-3 text-xl font-black text-start">
-                                <School className="text-primary" />
-                                {t.dashboards.class_identity}
+                                <Shield className="text-primary" />
+                                Class Template
                             </h3>
 
                             <div className="space-y-6 text-start">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.new_class.level_label}</label>
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Select SuperAdmin Class *</label>
                                     <select
-                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
-                                        value={formData.level}
-                                        onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.templateId}
+                                        onChange={(e) => handleTemplateChange(e.target.value)}
                                         required
                                     >
-                                        <option value="">{t.dashboards.new_class.select_level}</option>
-                                        {LEVELS.map((lvl) => (
-                                            <option key={lvl} value={lvl}>{lvl}</option>
+                                        <option value="">Choose a class...</option>
+                                        {templates.map((tpl) => (
+                                            <option key={tpl.id} value={tpl.id}>
+                                                {tpl.level} - {tpl.name} ({tpl.section})
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.class_section} *</label>
-                                    <input
-                                        type="text"
-                                        placeholder={t.dashboards.new_class.section_placeholder}
-                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all"
-                                        value={formData.section}
-                                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                                        required
-                                    />
-                                </div>
+                                {formData.templateId && (
+                                    <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-slate-500">Level:</span>
+                                            <span className="text-xs font-black text-primary">{t.levels[formData.level] || formData.level}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-slate-500">Section:</span>
+                                            <span className="text-xs font-black text-primary">{formData.section}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-slate-500">Gender:</span>
+                                            <span className="text-xs font-black text-primary">{formData.gender}</span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.gender}</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['BOYS', 'GIRLS', 'MIXED'].map((g) => (
-                                            <button
-                                                key={g}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, gender: g })}
-                                                className={`py-3 rounded-xl text-[10px] font-black transition-all border ${formData.gender === g ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-slate-500/5 text-slate-500 border-border hover:bg-slate-500/10'}`}
-                                            >
-                                                {g === 'BOYS' ? t.dashboards.gender_boys : g === 'GIRLS' ? t.dashboards.gender_girls : t.dashboards.gender_mixed}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Academic Year *</label>
+                                    <select
+                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.academicYear}
+                                        onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                                        required
+                                    >
+                                        <option value="1402">1402</option>
+                                        <option value="1403">1403</option>
+                                        <option value="1404">1404</option>
+                                    </select>
                                 </div>
 
                                 <div className="space-y-2">
@@ -222,38 +250,34 @@ export default function NewClassPage() {
                                         onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
                                     >
                                         <option value="">{t.dashboards.class_details.select_teacher}</option>
-                                        {teachers.map((t: any) => (
-                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        {teachers.map((teach: any) => (
+                                            <option key={teach.id} value={teach.id}>{teach.name}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Subjects Display (Auto-filled) */}
                         <div className="p-8 rounded-[2rem] bg-card/60 border border-border flex flex-col gap-4 text-start">
                             <div className="flex items-center gap-2 text-primary">
                                 <BookOpen size={20} />
                                 <h4 className="font-black text-sm uppercase tracking-wide">{t.dashboards.subjects}</h4>
                             </div>
-                            <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto custom-scrollbar">
-                                {subjects.map((sub: any) => (
-                                    <button
-                                        key={sub.id}
-                                        type="button"
-                                        onClick={() => {
-                                            const newIds = formData.subjectIds.includes(sub.id)
-                                                ? formData.subjectIds.filter(id => id !== sub.id)
-                                                : [...formData.subjectIds, sub.id];
-                                            setFormData({ ...formData, subjectIds: newIds });
-                                        }}
-                                        className={`px-3 py-2 rounded-lg text-xs font-black transition-all border ${formData.subjectIds.includes(sub.id)
-                                            ? 'bg-primary text-white border-primary'
-                                            : 'bg-slate-50 dark:bg-white/5 border-border hover:border-primary'
-                                            }`}
-                                    >
-                                        {sub.name}
-                                    </button>
-                                ))}
+                            <div className="flex flex-wrap gap-2">
+                                {formData.subjectIds.length > 0 ? (
+                                    formData.subjectIds.map((subId: string) => {
+                                        const template = templates.find(t => t.id === formData.templateId);
+                                        const subject = template?.subjects?.find((s: any) => s.id === subId);
+                                        return (
+                                            <span key={subId} className="px-3 py-1.5 rounded-lg text-[10px] font-black bg-primary/10 text-primary border border-primary/20">
+                                                {subject?.name || subId}
+                                            </span>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-[10px] font-bold text-slate-400 italic">Subjects will be imported from template</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -277,10 +301,6 @@ export default function NewClassPage() {
                                     />
                                 </div>
                             </div>
-
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-start px-1">
-                                {t.dashboards.new_class.roster_desc}
-                            </p>
 
                             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2">
                                 {filteredStudents.length > 0 ? filteredStudents.map((student: any) => (
@@ -327,6 +347,13 @@ export default function NewClassPage() {
                     </div>
                 </form>
             </div>
+
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.2); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.5); }
+            `}</style>
         </div>
     );
 }

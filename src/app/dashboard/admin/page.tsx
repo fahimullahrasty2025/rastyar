@@ -25,6 +25,7 @@ import {
     QrCode
 } from "lucide-react";
 import Link from "next/link";
+import DashboardClock from "@/components/DashboardClock";
 
 export default function AdminDashboard() {
     const { data: session, status } = useSession();
@@ -137,6 +138,7 @@ export default function AdminDashboard() {
     const quickActions = [
         { label: t.dashboards.add_student, icon: Plus, href: "/dashboard/admin/students/new", bg: "bg-cyan-500/10 hover:bg-cyan-500/20", border: "border-cyan-500/20", text: "text-cyan-400" },
         { label: t.dashboards.manage_classes, icon: BookOpen, href: "/dashboard/admin/classes", bg: "bg-purple-500/10 hover:bg-purple-500/20", border: "border-purple-500/20", text: "text-purple-400" },
+        { label: t.dashboards.manage_employees, icon: Users, href: "/dashboard/admin/employees", bg: "bg-emerald-500/10 hover:bg-emerald-500/20", border: "border-emerald-500/20", text: "text-emerald-400" },
     ];
 
     return (
@@ -148,6 +150,10 @@ export default function AdminDashboard() {
 
             {/* Content is now inside the layout's main */}
             <div className="p-4 md:p-8 relative z-10">
+                {/* Clock Section */}
+                <div className="mb-6 flex justify-end">
+                    <DashboardClock />
+                </div>
 
                 {/* Top Glass Nav */}
                 <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">

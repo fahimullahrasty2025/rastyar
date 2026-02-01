@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
     ArrowLeft,
@@ -18,7 +18,7 @@ import {
     AlertTriangle,
     UserCheck,
     BookOpen,
-    Camera
+    Shield
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,18 +36,79 @@ export default function ClassDetailPage() {
 
     // Options
     const [teachers, setTeachers] = useState<any[]>([]);
+    const [allSubjects, setAllSubjects] = useState<any[]>([]);
     const [availableStudents, setAvailableStudents] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<any[]>([]);
 
     // Class Data
     const [classData, setClassData] = useState<any>(null);
     const [formData, setFormData] = useState({
+        templateId: "", // Optional, if we want to change template
+        level: "",
         section: "",
         gender: "",
+        name: "",
+        academicYear: "1403",
         teacherId: "",
+        subjectIds: [] as string[],
         studentIds: [] as string[]
     });
 
     const [studentSearchTerm, setStudentSearchTerm] = useState("");
+
+    const fetchInitialData = async () => {
+        try {
+            const [classRes, teacherRes, subjectRes, availableStudentRes, templatesRes] = await Promise.all([
+                fetch(`/api/admin/classes/${params.id}`),
+                fetch("/api/admin/teachers"),
+                fetch("/api/subjects"),
+                fetch("/api/admin/available-students"),
+                fetch("/api/classes")
+            ]);
+
+            let currentClassData = null;
+
+            if (classRes.ok) {
+                const data = await classRes.json();
+                currentClassData = data;
+                setClassData(data);
+                setFormData({
+                    templateId: "",
+                    level: data.level,
+                    section: data.section,
+                    gender: data.gender,
+                    name: data.name,
+                    academicYear: data.academicYear || "1403", // Fetch from data
+                    teacherId: data.teacherId || "",
+                    subjectIds: data.subjects.map((s: any) => s.id),
+                    studentIds: data.students.map((s: any) => s.id)
+                });
+            } else {
+                setError("Class not found");
+                setLoading(false);
+                return;
+            }
+
+            if (teacherRes.ok) setTeachers(await teacherRes.json());
+            if (subjectRes.ok) setAllSubjects(await subjectRes.json());
+            if (templatesRes.ok) setTemplates(await templatesRes.json());
+
+            if (availableStudentRes.ok) {
+                const avail = await availableStudentRes.json();
+                if (currentClassData) {
+                    // Combine already enrolled students with available ones
+                    setAvailableStudents([...(currentClassData as any).students, ...avail]);
+                } else {
+                    setAvailableStudents(avail);
+                }
+            }
+
+        } catch (err: any) {
+            setError("Failed to load data");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -61,52 +122,20 @@ export default function ClassDetailPage() {
         }
     }, [status, session, router, params.id]);
 
-    const fetchInitialData = async () => {
-        try {
-            const [classRes, teacherRes, availableStudentRes] = await Promise.all([
-                fetch(`/api/admin/classes/${params.id}`),
-                fetch("/api/admin/teachers"),
-                fetch("/api/admin/available-students")
-            ]);
-
-            let currentClassData = null;
-
-            if (classRes.ok) {
-                const data = await classRes.json();
-                currentClassData = data;
-                setClassData(data);
-                setFormData({
-                    section: data.section,
-                    gender: data.gender,
-                    teacherId: data.teacherId || "",
-                    studentIds: data.students.map((s: any) => s.id)
-                });
-            } else {
-                const errorData = await classRes.json().catch(() => ({}));
-                setError(`Class not found: ${errorData.message || classRes.statusText}`);
-                setLoading(false);
-                return;
-            }
-
-            if (teacherRes.ok) {
-                setTeachers(await teacherRes.json());
-            }
-
-            if (availableStudentRes.ok) {
-                const avail = await availableStudentRes.json();
-                // Combine currently enrolled students with other available students
-                if (currentClassData) {
-                    setAvailableStudents([...currentClassData.students, ...avail]);
-                } else {
-                    setAvailableStudents(avail);
-                }
-            }
-
-        } catch (err: any) {
-            console.error("Load Class Details Error:", err);
-            setError(`Error: ${err.message || "Failed to load class details"}`);
-        } finally {
-            setLoading(false);
+    const handleTemplateChange = (templateId: string) => {
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            setFormData(prev => ({
+                ...prev,
+                templateId,
+                name: template.name,
+                level: template.level,
+                section: template.section,
+                gender: template.gender,
+                // Only overwrite subjects if the Admin wants to? 
+                // The user said "can add/remove subjects", so maybe just sync initially
+                subjectIds: template.subjects.map((s: any) => s.id)
+            }));
         }
     };
 
@@ -116,6 +145,15 @@ export default function ClassDetailPage() {
             studentIds: prev.studentIds.includes(id)
                 ? prev.studentIds.filter(sId => sId !== id)
                 : [...prev.studentIds, id]
+        }));
+    };
+
+    const toggleSubject = (id: string) => {
+        setFormData(prev => ({
+            ...prev,
+            subjectIds: prev.subjectIds.includes(id)
+                ? prev.subjectIds.filter(sId => sId !== id)
+                : [...prev.subjectIds, id]
         }));
     };
 
@@ -129,10 +167,7 @@ export default function ClassDetailPage() {
             const res = await fetch(`/api/admin/classes/${params.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    level: classData.level // Keep existing level
-                }),
+                body: JSON.stringify(formData),
             });
 
             if (res.ok) {
@@ -189,15 +224,14 @@ export default function ClassDetailPage() {
             <div className={`fixed -top-24 ${dir === 'rtl' ? '-right-24' : '-left-24'} h-96 w-96 rounded-full bg-cyan-600/10 blur-[120px] animate-pulse pointer-events-none`}></div>
 
             <div className="container mx-auto px-4 md:px-8 py-8 relative z-10">
-
                 <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <Link href="/dashboard/admin/classes" className="p-3 bg-card border border-border rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm group">
                             <ArrowLeft size={20} className={`transition-transform ${dir === 'rtl' ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:-translate-x-1'}`} />
                         </Link>
                         <div className="text-start">
-                            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-primary">{classData.level} {t.dashboards.view_profile}</h2>
-                            <h1 className="text-3xl font-black tracking-tight">{classData.name}</h1>
+                            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-primary">{t.levels[classData.level] || classData.level} Profile</h2>
+                            <h1 className="text-3xl font-black tracking-tight">{formData.name}</h1>
                         </div>
                     </div>
 
@@ -210,47 +244,54 @@ export default function ClassDetailPage() {
                 </header>
 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
                     <div className="lg:col-span-1 space-y-6">
-
-                        {/* Class Identity Card */}
+                        {/* Class Template & Basic Info (Locked mostly) */}
                         <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-xl border border-border shadow-xl space-y-8">
                             <h3 className="flex items-center gap-3 text-xl font-black text-start">
-                                <School className="text-primary" />
+                                <Shield className="text-primary" />
                                 {t.dashboards.class_identity}
                             </h3>
 
                             <div className="space-y-6 text-start">
-                                <div className="p-4 rounded-2xl bg-slate-500/5 border border-border/50">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.dashboards.class_details.fixed_level}</p>
-                                    <p className="text-sm font-black text-foreground">{classData.level}</p>
-                                </div>
-
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.class_section}</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none"
-                                        value={formData.section}
-                                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">{t.dashboards.gender}</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['BOYS', 'GIRLS', 'MIXED'].map((g) => (
-                                            <button
-                                                key={g}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, gender: g })}
-                                                className={`py-3 rounded-xl text-[10px] font-black border transition-all ${formData.gender === g ? 'bg-primary text-white border-primary shadow-lg' : 'bg-slate-500/5 text-slate-500 border-border'}`}
-                                            >
-                                                {g === 'BOYS' ? t.dashboards.gender_boys : g === 'GIRLS' ? t.dashboards.gender_girls : t.dashboards.gender_mixed}
-                                            </button>
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Switch Template (Optional)</label>
+                                    <select
+                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.templateId}
+                                        onChange={(e) => handleTemplateChange(e.target.value)}
+                                    >
+                                        <option value="">Keep current info</option>
+                                        {templates.map((tpl) => (
+                                            <option key={tpl.id} value={tpl.id}>
+                                                {tpl.level} - {tpl.name} ({tpl.section})
+                                            </option>
                                         ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 rounded-xl bg-slate-500/5 border border-border">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Level</p>
+                                        <p className="text-sm font-black text-foreground">{t.levels[formData.level] || formData.level}</p>
                                     </div>
+                                    <div className="p-4 rounded-xl bg-slate-500/5 border border-border">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Section</p>
+                                        <p className="text-sm font-black text-foreground">{formData.section}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Academic Year *</label>
+                                    <select
+                                        className="w-full bg-slate-50 dark:bg-white/5 border border-border rounded-2xl px-5 py-3.5 text-sm font-bold focus:ring-2 focus:ring-primary outline-none transition-all appearance-none cursor-pointer"
+                                        value={formData.academicYear}
+                                        onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+                                        required
+                                    >
+                                        <option value="1402">1402</option>
+                                        <option value="1403">1403</option>
+                                        <option value="1404">1404</option>
+                                    </select>
                                 </div>
 
                                 <div className="space-y-2">
@@ -261,32 +302,39 @@ export default function ClassDetailPage() {
                                         onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
                                     >
                                         <option value="">{t.dashboards.class_details.select_teacher}</option>
-                                        {teachers.map((t: any) => (
-                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        {teachers.map((teach: any) => (
+                                            <option key={teach.id} value={teach.id}>{teach.name}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Automatic Subjects Card */}
+                        {/* Subject Management */}
                         <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-xl border border-border shadow-xl space-y-6">
                             <h3 className="flex items-center gap-3 text-xl font-black text-start">
                                 <BookOpen className="text-purple-500" />
                                 {t.dashboards.subjects}
                             </h3>
-                            <div className="flex flex-wrap gap-2">
-                                {classData.subjects.map((sub: any) => (
-                                    <span key={sub.id} className="px-4 py-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-black border border-purple-500/20">
+                            <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto custom-scrollbar">
+                                {allSubjects.map((sub: any) => (
+                                    <button
+                                        key={sub.id}
+                                        type="button"
+                                        onClick={() => toggleSubject(sub.id)}
+                                        className={`px-3 py-2 rounded-lg text-xs font-black transition-all border ${formData.subjectIds.includes(sub.id)
+                                            ? 'bg-primary text-white border-primary shadow-sm'
+                                            : 'bg-slate-50 dark:bg-white/5 border-border hover:border-primary'
+                                            }`}
+                                    >
                                         {sub.name}
-                                    </span>
+                                    </button>
                                 ))}
                             </div>
                         </div>
                     </div>
 
                     <div className="lg:col-span-2 space-y-6 text-start">
-
                         {/* Student Management Card */}
                         <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-xl border border-border shadow-xl space-y-6 flex flex-col min-h-[500px]">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -350,7 +398,6 @@ export default function ClassDetailPage() {
                                 {t.dashboards.save_changes}
                             </button>
                         </div>
-
                     </div>
                 </form>
             </div>

@@ -8,7 +8,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN")) {
+        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN" && (session.user as any).role !== "TEACHER")) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -45,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const { id } = await params;
         const data = await req.json();
-        const { section, gender, teacherId, studentIds, subjectIds } = data;
+        const { section, gender, teacherId, studentIds, subjectIds, academicYear, level } = data;
 
         const updatedClass = await prisma.schoolClass.update({
             where: { id },
@@ -53,16 +53,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 section: section,
                 gender: gender,
                 teacherId: teacherId || null,
-                // Update name based on section change
-                name: `${data.level || 'Class'} - ${section}`, // Fallback if level missing in body? check logic
+                academicYear: academicYear || "1403",
+                name: `${level || 'Class'} - ${section}`,
                 students: {
                     set: (studentIds || []).map((sId: string) => ({ id: sId }))
                 },
-                subjects: { // Update subjects
+                subjects: {
                     set: (subjectIds || []).map((sId: string) => ({ id: sId }))
                 }
             }
         });
+
+        // 3. Sync historical enrollment records
+        if (studentIds && studentIds.length > 0 && academicYear) {
+            await Promise.all(studentIds.map((sId: string) =>
+                prisma.enrollment.upsert({
+                    where: { studentId_academicYear: { studentId: sId, academicYear: academicYear } },
+                    update: { classId: updatedClass.id },
+                    create: { studentId: sId, classId: updatedClass.id, academicYear: academicYear }
+                })
+            ));
+        }
 
         return NextResponse.json(updatedClass);
     } catch (error) {

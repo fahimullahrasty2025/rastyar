@@ -32,7 +32,7 @@ export default function Navbar() {
         : "/";
 
     return (
-        <nav className={`sticky top-0 z-[100] transition-all duration-500 ${isDashboard
+        <nav className={`sticky top-0 z-[100] no-print transition-all duration-500 ${isDashboard
             ? "bg-transparent border-none py-4"
             : "bg-white/70 dark:bg-[#07070a]/80 backdrop-blur-2xl border-b border-gray-200/50 dark:border-white/5 py-3 shadow-2xl shadow-black/10"
             }`}>

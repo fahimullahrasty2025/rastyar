@@ -16,7 +16,10 @@ import {
     XCircle,
     Loader2,
     AlertTriangle,
-    Download
+    Download,
+    History,
+    Award,
+    Calendar
 } from "lucide-react";
 import { useRef } from "react";
 import Link from "next/link";
@@ -57,6 +60,11 @@ export default function StudentProfilePage() {
         qrCode: ""
     });
 
+    const [studentHistory, setStudentHistory] = useState({
+        enrollments: [] as any[],
+        grades: [] as any[]
+    });
+
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/auth/signin");
@@ -95,6 +103,10 @@ export default function StudentProfilePage() {
                     email: data.email || "",
                     image: data.image || "",
                     qrCode: data.qrCode || ""
+                });
+                setStudentHistory({
+                    enrollments: data.enrollments || [],
+                    grades: data.grades || []
                 });
             } else {
                 setError(`${data.message || "Could not load student data"} (Status: ${res.status})`);
@@ -389,6 +401,56 @@ export default function StudentProfilePage() {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Section 4: Academic History (Yearly Records) */}
+                        <div className="p-8 rounded-[2.5rem] bg-card/60 backdrop-blur-xl border border-border shadow-xl space-y-8">
+                            <h3 className="flex items-center gap-3 text-xl font-black">
+                                <History className="text-blue-500" />
+                                {t.dashboards.academic_history || "Academic History"}
+                            </h3>
+
+                            {studentHistory.enrollments.length > 0 ? (
+                                <div className="space-y-6">
+                                    {studentHistory.enrollments.map((enrol, idx) => (
+                                        <div key={idx} className="p-6 rounded-2xl bg-slate-500/5 border border-border space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                                                        <Calendar size={18} />
+                                                    </div>
+                                                    <span className="text-lg font-black">{enrol.academicYear}</span>
+                                                </div>
+                                                <span className="px-4 py-1.5 bg-primary/20 text-primary rounded-full text-xs font-black uppercase tracking-widest">
+                                                    {enrol.class?.level} - {enrol.class?.section}
+                                                </span>
+                                            </div>
+
+                                            {/* Grades for this year */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                                {studentHistory.grades
+                                                    .filter(g => g.academicYear === enrol.academicYear || g.classId === enrol.classId)
+                                                    .map((grade, gIdx) => (
+                                                        <div key={gIdx} className="flex items-center justify-between p-3 bg-white dark:bg-white/5 rounded-xl border border-border shadow-sm">
+                                                            <div className="flex items-center gap-2">
+                                                                <Award size={14} className="text-orange-500" />
+                                                                <span className="text-xs font-bold">{grade.subject?.name}</span>
+                                                                <span className="text-[10px] text-slate-500">({grade.type})</span>
+                                                            </div>
+                                                            <span className={`text-sm font-black ${grade.score >= 50 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                                {grade.score}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-10 text-center text-slate-400 italic font-bold">
+                                    No historical records found for this student.
+                                </div>
+                            )}
                         </div>
 
                         {/* Final Actions */}

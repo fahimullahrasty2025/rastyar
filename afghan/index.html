@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>جدول نتایج - لیسه عالی خصوصی نیکان</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --margin-top: 0.5cm;
+        --margin-right: 0.5cm;
+        --margin-bottom: 0.5cm;
+        --margin-left: 0.5cm;
+      }
+      body {
+        font-family: 'Vazirmatn', sans-serif;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 0;
+        text-align: right;
+        color: #000000;
+      }
+      @media print {
+        body {
+          background-color: white !important;
+          color: #000000 !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+        @page {
+          size: A4 landscape;
+          margin: 0;
+        }
+        * {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          color: #000000 !important;
+          border-color: #000000 !important;
+        }
+        .a4-landscape {
+          margin: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+          width: 297mm !important;
+          height: 210mm !important;
+        }
+      }
+      .a4-landscape {
+        width: 297mm;
+        height: 210mm;
+        padding-top: var(--margin-top);
+        padding-right: var(--margin-right);
+        padding-bottom: var(--margin-bottom);
+        padding-left: var(--margin-left);
+        background: white;
+        margin: 10mm auto;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        direction: rtl;
+        color: #000000;
+      }
+      .vertical-text {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        white-space: nowrap;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        direction: rtl;
+        border: 1.5px solid #000000;
+      }
+      th, td {
+        border: 1px solid #000000;
+        padding: 1px 2px;
+        text-align: center;
+        /* Changed to inherit so React inline styles can override it */
+        font-size: inherit; 
+        line-height: 1.1;
+        color: #000000;
+      }
+      .observation-cell {
+        vertical-align: middle;
+        text-align: right !important;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+      .text-right-important {
+        text-align: right !important;
+      }
+      .header-title {
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .sub-header-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      /* Modern inputs */
+      .margin-input {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        width: 60px;
+        text-align: center;
+        transition: all 0.2s;
+      }
+      .margin-input:focus {
+        border-color: #000;
+        box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+        outline: none;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

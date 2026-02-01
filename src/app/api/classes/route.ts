@@ -4,7 +4,50 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any).role;
+    const userId = (session.user as any).id;
+
+    let where: any = {};
+
+    if (role === "ADMIN") {
+        // Admin sees classes they created OR classes created by their teachers OR SuperAdmin classes
+        const superAdmins = await prisma.user.findMany({
+            where: { role: "SUPERADMIN" },
+            select: { id: true }
+        });
+        const teachers = await prisma.user.findMany({
+            where: { createdById: userId, role: "TEACHER" },
+            select: { id: true }
+        });
+
+        const authorizedIds = [userId, ...teachers.map(t => t.id), ...superAdmins.map(s => s.id)];
+        where.createdById = { in: authorizedIds };
+    } else if (role === "TEACHER") {
+        // Teacher sees classes from their creator
+        const teacher = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { createdById: true }
+        });
+
+        if (teacher?.createdById) {
+            where.createdById = teacher.createdById;
+        } else {
+            // Self-registered teacher: show SuperAdmin classes
+            const superAdmins = await prisma.user.findMany({
+                where: { role: "SUPERADMIN" },
+                select: { id: true }
+            });
+            where.createdById = { in: superAdmins.map(s => s.id) };
+        }
+    }
+
     const classes = await prisma.schoolClass.findMany({
+        where,
         include: {
             teacher: true,
             subjects: true,
@@ -30,6 +73,7 @@ export async function POST(req: Request) {
                 section,
                 gender,
                 teacherId: teacherId || null,
+                createdById: (session.user as any).id,
                 subjects: {
                     connect: (subjectIds || []).map((id: string) => ({ id }))
                 }

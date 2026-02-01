@@ -14,13 +14,29 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         const { id } = await params;
 
-        const student = await prisma.user.findUnique({
-            where: { id: id },
-            include: { currentClass: true }
+        const isAdmin = (session.user as any).role === "ADMIN";
+        const userId = (session.user as any).id;
+
+        const student = await prisma.user.findFirst({
+            where: {
+                id: id,
+                role: "STUDENT",
+                ...(isAdmin ? { createdById: userId } : {})
+            },
+            include: {
+                currentClass: true,
+                enrollments: {
+                    include: { class: true },
+                    orderBy: { academicYear: 'desc' }
+                },
+                grades: {
+                    include: { subject: true, class: true },
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
         });
 
-        if (!student || student.role !== "STUDENT") {
-            console.warn(`Student not found or role mismatch. ID: ${id}, Role: ${student?.role}`);
+        if (!student) {
             return NextResponse.json({ message: "Student not found" }, { status: 404 });
         }
 
@@ -42,6 +58,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const { id } = await params;
         const data = await req.json();
+        const isAdmin = (session.user as any).role === "ADMIN";
+        const userId = (session.user as any).id;
+
+        // Check if student exists and belongs to this admin
+        const student = await prisma.user.findFirst({
+            where: {
+                id: id,
+                role: "STUDENT",
+                ...(isAdmin ? { createdById: userId } : {})
+            }
+        });
+
+        if (!student) {
+            return NextResponse.json({ message: "Student not found" }, { status: 404 });
+        }
 
         const updatedStudent = await prisma.user.update({
             where: { id: id },
@@ -68,6 +99,21 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         const { id } = await params;
+        const isAdmin = (session.user as any).role === "ADMIN";
+        const userId = (session.user as any).id;
+
+        // Check if student exists and belongs to this admin
+        const student = await prisma.user.findFirst({
+            where: {
+                id: id,
+                role: "STUDENT",
+                ...(isAdmin ? { createdById: userId } : {})
+            }
+        });
+
+        if (!student) {
+            return NextResponse.json({ message: "Student not found" }, { status: 404 });
+        }
 
         await prisma.user.delete({
             where: { id: id }

@@ -10,14 +10,52 @@ export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN")) {
+        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN" && (session.user as any).role !== "TEACHER")) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
+        const role = (session.user as any).role;
+        const userId = (session.user as any).id;
+
+        let where: any = { role: "STUDENT" };
+
+        if (role === "ADMIN") {
+            // Admin sees students they created OR students created by their teachers
+            const teachers = await prisma.user.findMany({
+                where: { createdById: userId, role: "TEACHER" },
+                select: { id: true }
+            });
+            const teacherIds = teachers.map(t => t.id);
+            where.createdById = { in: [userId, ...teacherIds] };
+        } else if (role === "TEACHER") {
+            // Teacher sees students from their creator
+            const teacher = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { createdById: true }
+            });
+
+            if (teacher?.createdById) {
+                // If created by an Admin, show Admin's students (and other students the teacher might have created)
+                // Actually, for consistency, show students created by the Admin + students created by the Admin's other teachers?
+                // The request says "list of students from that manager"
+                where.createdById = teacher.createdById;
+            } else {
+                // Self-registered teacher: show SuperAdmin students
+                const superAdmins = await prisma.user.findMany({
+                    where: { role: "SUPERADMIN" },
+                    select: { id: true }
+                });
+                where.createdById = { in: superAdmins.map(s => s.id) };
+            }
+        } else if (role === "SUPERADMIN") {
+            // SuperAdmin sees all students
+            where = { role: "STUDENT" };
+        } else {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
         const students = await prisma.user.findMany({
-            where: {
-                role: "STUDENT"
-            },
+            where,
             select: {
                 id: true,
                 name: true,
@@ -35,7 +73,7 @@ export async function GET(req: Request) {
                 createdAt: true
             },
             orderBy: {
-                id: "desc"
+                createdAt: "desc"
             }
         });
 
@@ -51,7 +89,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN")) {
+        if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "SUPERADMIN" && (session.user as any).role !== "TEACHER")) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 

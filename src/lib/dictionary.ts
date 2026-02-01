@@ -14,7 +14,24 @@ export const dictionary = {
             TEACHER: "معلم",
             STUDENT: "شاگرد",
             PARENT: "والدین",
-            STAFF: "کارمند"
+            STAFF: "کارمند",
+            all_roles: "همه نقش‌ها"
+        },
+        levels: {
+            "Kindergarten": "کودکستان",
+            "Preparatory": "آمادگی",
+            "Grade 1": "صنف اول",
+            "Grade 2": "صنف دوم",
+            "Grade 3": "صنف سوم",
+            "Grade 4": "صنف چهارم",
+            "Grade 5": "صنف پنجم",
+            "Grade 6": "صنف ششم",
+            "Grade 7": "صنف هفتم",
+            "Grade 8": "صنف هشتم",
+            "Grade 9": "صنف نهم",
+            "Grade 10": "صنف دهم",
+            "Grade 11": "صنف یازدهم",
+            "Grade 12": "صنف دوازدهم"
         },
         home_page: {
             description: "پلتفرمی مدرن، امن و هوشمند برای مدیریت اکوسیستم آموزشی مکتب شما، از مدیران کل تا والدین.",
@@ -147,6 +164,7 @@ export const dictionary = {
                 selected_badge: "انتخاب شده",
                 success_msg: "صنف با موفقیت ایجاد شد!"
             },
+            academic_history: "سوابق تحصیلی",
             transform_flow: "تحول در جریان آموزشی شما",
             generate_report: "تهیه گزارش",
             settings: "تنظیمات",
@@ -158,7 +176,29 @@ export const dictionary = {
             system_online: "سیستم آنلاین",
             loading_students: "در حال بارگذاری شاگردان...",
             error_loading_students: "خطا در بارگذاری شاگردان",
-            something_went_wrong: "مشکلی پیش آمده است"
+            something_went_wrong: "مشکلی پیش آمده است",
+            manage_employees: "مدیریت کارمندان",
+            staff_list: "لیست پرسونل",
+            years_of_experience: "تجربه کاری",
+            years_suffix: "سال",
+            joined_date: "تاریخ شمولیت",
+            no_employees_found: "هیچ کارمندی با این مشخصات یافت نشد.",
+            add_employee: "استخدام کارمند جدید",
+            create_employee: "ایجاد حساب کارمند",
+            search_employee_placeholder: "جستجوی کارمند بر اساس نام، ایمیل یا وظیفه...",
+            edit_employee: "ویرایش اطلاعات کارمند",
+            update_employee: "بروزرسانی اطلاعات",
+            qr_code_title: "کارت هوشمند کارمند",
+            download_id_card: "دانلود کارت شناسایی",
+            control_center: "مرکز کنترل",
+            total_students: "مجموع شاگردان",
+            total_classes: "مجموع صنوف",
+            total_subjects: "مجموع مضامین",
+            money_received: "پول اخذ شده",
+            human_resources: "منابع بشری",
+            open_console: "باز کردن کنسول",
+            open_directory: "باز کردن لست",
+            add_admin: "افزودن مدیر جدید"
         },
         student_registration: {
             title: "ثبت نام شاگرد جدید",
@@ -180,6 +220,26 @@ export const dictionary = {
             maternal_cousin: "پسر ماما",
             photo: "تصویر شاگرد",
             submit: "ثبت شاگرد"
+        },
+        grading: {
+            title: "نمره‌دهی",
+            configuration: "تنظیمات",
+            subject: "مضمون",
+            exam_term: "دوره امتحان",
+            midterm: "چهار و نیم ماهه",
+            final: "سالانه",
+            save_grades: "ثبت نمرات",
+            student_list: "لیست شاگردان",
+            score_label: "نمره (۰-۱۰۰)",
+            student_name: "نام شاگرد",
+            student_id: "آیدی",
+            no_students: "هیچ شاگردی در این صنف موجود نیست.",
+            saved: "ذخیره شد!",
+            results_sheet: "شقه نتایج",
+            total: "مجموع",
+            average: "اوسط",
+            rank: "درجه",
+            print: "چاپ"
         }
     },
     ps: {
@@ -197,7 +257,24 @@ export const dictionary = {
             TEACHER: "ښوونکی",
             STUDENT: " زده کونکی",
             PARENT: "پلار/مور",
-            STAFF: "کارمند"
+            STAFF: "کارمند",
+            all_roles: "ټول رولونه"
+        },
+        levels: {
+            "Kindergarten": "کودکستان",
+            "Preparatory": "آمادګي",
+            "Grade 1": "لومړی ټولګی",
+            "Grade 2": "دوهم ټولګی",
+            "Grade 3": "دریم ټولګی",
+            "Grade 4": "څلورم ټولګی",
+            "Grade 5": "پنځم ټولګی",
+            "Grade 6": "شپږم ټولګی",
+            "Grade 7": "اووم ټولګی",
+            "Grade 8": "اتم ټولګی",
+            "Grade 9": "نهم ټولګی",
+            "Grade 10": "لسم ټولګی",
+            "Grade 11": "یوولسم ټولګی",
+            "Grade 12": "دولسم ټولګی"
         },
         home_page: {
             description: "ستاسو د ښوونځي ښوونیز اکوسیستم اداره کولو لپاره یو عصري، خوندي او هوښیار پلیټ فارم، له لوړ مدیرانو څخه تر والدینو پورې.",
@@ -330,6 +407,7 @@ export const dictionary = {
                 selected_badge: "انتخاب شوی",
                 success_msg: "صنف په بریالیتوب سره جوړ شو!"
             },
+            academic_history: "تحصیلي سوابق",
             transform_flow: "ستاسو د تعلیمي جریان بدلون",
             generate_report: "راپور جوړول",
             settings: "ترتیبات",
@@ -341,7 +419,29 @@ export const dictionary = {
             system_online: "سیسټم آنلاین دی",
             loading_students: "د زده کونکو د بارولو په حال کې...",
             error_loading_students: "د زده کونکو په بارولو کې تېروتنه",
-            something_went_wrong: "کومه ستونزه رامنځته شوه"
+            something_went_wrong: "کومه ستونزه رامنځته شوه",
+            manage_employees: "د کارمندانو مدیریت",
+            staff_list: "د کارمندانو لیست",
+            years_of_experience: "کاري تجربه",
+            years_suffix: "کاله",
+            joined_date: "د شامیلیدو نیټه",
+            no_employees_found: "د دې مشخصاتو سره هیڅ کارمند ونه موندل شو.",
+            add_employee: "د نوي کارمند ګمارل",
+            create_employee: "د کارمند حساب جوړول",
+            search_employee_placeholder: "کارمند د نوم، بریښنالیک یا دندې په واسطه وپلټئ...",
+            edit_employee: "د کارمند معلومات بدلول",
+            update_employee: "معلومات تازه کول",
+            qr_code_title: "د کارمند هوشمند کارت",
+            download_id_card: "د پیژندنې کارت ډاونلوډ",
+            control_center: "د کنټرول مرکز",
+            total_students: "ټول زده کونکي",
+            total_classes: "ټول صنفونه",
+            total_subjects: "ټول مضامین",
+            money_received: "ترلاسه شوې پیسې",
+            human_resources: "بشري سرچینې",
+            open_console: "کنسول پرانیستل",
+            open_directory: "لست پرانیستل",
+            add_admin: "نوی مدیر اضافه کړئ"
         },
         student_registration: {
             title: "د نوي زده کونکي ثبتول",
@@ -363,6 +463,26 @@ export const dictionary = {
             maternal_cousin: "د ماما زوی",
             photo: "د زده کونکي انځور",
             submit: "زده کونکی ثبت کړئ"
+        },
+        grading: {
+            title: "نمره ورکول",
+            configuration: "تنظیمات",
+            subject: "مضمون",
+            exam_term: "د ازموینې دوره",
+            midterm: "څلور نیم میاشتنۍ",
+            final: "کلنۍ",
+            save_grades: "نمرې ثبت کړئ",
+            student_list: "د زده کونکو لیست",
+            score_label: "نمره (۰-۱۰۰)",
+            student_name: "د زده کونکي نوم",
+            student_id: "آی ډي",
+            no_students: "په دې صنف کې هیڅ زده کونکی نشته.",
+            saved: "خوندي شو!",
+            results_sheet: "د پایلو پاڼه (شقه)",
+            total: "ټول",
+            average: "اوسط",
+            rank: "درجه",
+            print: "چاپ"
         }
     },
     en: {
@@ -380,7 +500,24 @@ export const dictionary = {
             TEACHER: "Teacher",
             STUDENT: "Student",
             PARENT: "Parent",
-            STAFF: "Staff"
+            STAFF: "Staff",
+            all_roles: "All Roles"
+        },
+        levels: {
+            "Kindergarten": "Kindergarten",
+            "Preparatory": "Preparatory",
+            "Grade 1": "Grade 1",
+            "Grade 2": "Grade 2",
+            "Grade 3": "Grade 3",
+            "Grade 4": "Grade 4",
+            "Grade 5": "Grade 5",
+            "Grade 6": "Grade 6",
+            "Grade 7": "Grade 7",
+            "Grade 8": "Grade 8",
+            "Grade 9": "Grade 9",
+            "Grade 10": "Grade 10",
+            "Grade 11": "Grade 11",
+            "Grade 12": "Grade 12"
         },
         home_page: {
             description: "A modern, secure, and intuitive platform for managing your school's educational ecosystem, from SuperAdmins to Parents.",
@@ -513,6 +650,7 @@ export const dictionary = {
                 selected_badge: "SELECTED",
                 success_msg: "Class created successfully!"
             },
+            academic_history: "Academic History",
             transform_flow: "Transform your Educational Flow",
             generate_report: "Generate Report",
             settings: "Settings",
@@ -524,7 +662,29 @@ export const dictionary = {
             system_online: "System Online",
             loading_students: "Loading students...",
             error_loading_students: "Error loading students",
-            something_went_wrong: "Something went wrong"
+            something_went_wrong: "Something went wrong",
+            manage_employees: "Manage Employees",
+            staff_list: "Staff List",
+            years_of_experience: "Work Experience",
+            years_suffix: "years",
+            joined_date: "Joined Date",
+            no_employees_found: "No employees found matching these criteria.",
+            add_employee: "Hire New Employee",
+            create_employee: "Create Employee Account",
+            search_employee_placeholder: "Search employee by name, email or job title...",
+            edit_employee: "Edit Employee Info",
+            update_employee: "Update Information",
+            qr_code_title: "Employee ID Card",
+            download_id_card: "Download ID Card",
+            control_center: "Control Center",
+            total_students: "Total Students",
+            total_classes: "Total Classes",
+            total_subjects: "Total Subjects",
+            money_received: "Money Received",
+            human_resources: "Human Resources",
+            open_console: "Open Console",
+            open_directory: "Open Directory",
+            add_admin: "Add New Admin"
         },
         student_registration: {
             title: "Register New Student",
@@ -546,6 +706,26 @@ export const dictionary = {
             maternal_cousin: "Maternal Cousin",
             photo: "Student Photo",
             submit: "Register Student"
+        },
+        grading: {
+            title: "Grading",
+            configuration: "Configuration",
+            subject: "Subject",
+            exam_term: "Exam Term",
+            midterm: "Midterm",
+            final: "Final (Annual)",
+            save_grades: "Save Grades",
+            student_list: "Student List",
+            score_label: "Score (0-100)",
+            student_name: "Student Name",
+            student_id: "ID",
+            no_students: "No students in this class.",
+            saved: "Saved!",
+            results_sheet: "Results Sheet",
+            total: "Total",
+            average: "Average",
+            rank: "Rank",
+            print: "Print"
         }
     }
 }
